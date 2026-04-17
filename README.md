@@ -1,11 +1,172 @@
 # ==============================================================================
-# COMPREHENSIVE MACHINE LEARNING LAB CODEBASE
+# TARGETED ML LAB CODEBASE (BASED ON PDF EXAM TOPICS)
 # ==============================================================================
-# Instructions: You can run this entire script, but because it contains multiple 
-# visualizations (plt.show()), the script will pause at each graph. Close the 
-# graph window to let the script continue to the next experiment.
-# ==============================================================================
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
+# ==============================================================================
+# 1. PREPROCESSING (pima-indians-diabetes)
+# ==============================================================================
+print("--- 1. PREPROCESSING ---")
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, Binarizer, Normalizer
+
+### --- CSV INTEGRATION --- ###
+# df_prep = pd.read_csv("pima-indians-diabetes.csv")
+# X_prep = df_prep.iloc[:, :-1].values 
+# y_prep = df_prep.iloc[:, -1].values  
+### ----------------------- ###
+
+# Dummy data fallback
+X_prep = np.array([[1.0, 200.0], [2.0, 100.0], [3.0, 50.0]])
+
+print("Standard Scaled:\n", StandardScaler().fit_transform(X_prep))
+print("MinMax Scaled:\n", MinMaxScaler().fit_transform(X_prep))
+print("Normalized (L2):\n", Normalizer(norm='l2').fit_transform(X_prep))
+print("Binarized (Threshold=1.5):\n", Binarizer(threshold=1.5).fit_transform(X_prep))
+
+
+# ==============================================================================
+# 2. LINEAR REGRESSION (i) Function and (ii) User Defined
+# ==============================================================================
+print("\n--- 2. LINEAR REGRESSION ---")
+from sklearn.linear_model import LinearRegression
+
+### --- CSV INTEGRATION --- ###
+# df_lr = pd.read_csv("Salary_Data.csv")
+# X_lin = df_lr['YearsExperience'].values 
+# y_lin = df_lr['Salary'].values          
+### ----------------------- ###
+
+X_lin = np.array([1, 2, 3, 4, 5])
+y_lin = np.array([2, 4, 5, 4, 5])
+
+# (i) Using Scikit-Learn Function
+X_lin_reshaped = X_lin.reshape(-1, 1) # Sklearn requires 2D arrays
+model_lr = LinearRegression().fit(X_lin_reshaped, y_lin)
+print("Built-in LR Prediction for x=6:", model_lr.predict([[6]]))
+
+# (ii) User-Defined (Mathematical Formula)
+x_mean, y_mean = np.mean(X_lin), np.mean(y_lin)
+numerator = np.sum((X_lin - x_mean) * (y_lin - y_mean))
+denominator = np.sum((X_lin - x_mean) ** 2)
+m = numerator / denominator # Slope
+c = y_mean - (m * x_mean)   # Intercept
+
+def user_defined_linear_regression(x):
+    return m * x + c
+
+print("User-defined LR Prediction for x=6:", user_defined_linear_regression(6))
+
+
+# ==============================================================================
+# 3. LOGISTIC REGRESSION (i) Function and (ii) User Defined
+# ==============================================================================
+print("\n--- 3. LOGISTIC REGRESSION ---")
+from sklearn.linear_model import LogisticRegression
+
+### --- CSV INTEGRATION --- ###
+# df_log = pd.read_csv("loan.csv")
+# X_log = df_log[['age']].values 
+# y_log = df_log['loan'].values
+### ----------------------- ###
+
+X_log = np.array([[1], [2], [3], [8], [9], [10]])
+y_log = np.array([0, 0, 0, 1, 1, 1])
+
+# (i) Using Scikit-Learn Function
+model_log = LogisticRegression().fit(X_log, y_log)
+print("Built-in Logistic Prediction for x=7:", model_log.predict([[7]]))
+
+# (ii) User-Defined (Gradient Descent)
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def user_defined_logistic_regression(X, y, epochs=1000, lr=0.1):
+    weights = np.zeros(X.shape[1])
+    bias = 0
+    for _ in range(epochs):
+        linear_model = np.dot(X, weights) + bias
+        y_pred = sigmoid(linear_model)
+        
+        dw = (1 / len(X)) * np.dot(X.T, (y_pred - y))
+        db = (1 / len(X)) * np.sum(y_pred - y)
+        
+        weights -= lr * dw
+        bias -= lr * db
+    return weights, bias
+
+w, b = user_defined_logistic_regression(X_log, y_log)
+test_val = 7
+prediction = 1 if sigmoid(np.dot([test_val], w) + b) >= 0.5 else 0
+print("User-defined Logistic Prediction for x=7:", prediction)
+
+
+# ==============================================================================
+# CLASSIFICATION MODELS (KNN, NAIVE BAYES, ADABOOST)
+# ==============================================================================
+from sklearn.datasets import load_iris
+X_clf, y_clf = load_iris(return_X_y=True)
+
+### --- CSV INTEGRATION --- ###
+# df_clf = pd.read_csv("classification_data.csv")
+# X_clf = df_clf.iloc[:, :-1].values 
+# y_clf = df_clf.iloc[:, -1].values  
+### ----------------------- ###
+
+X_train, X_test, y_train, y_test = train_test_split(X_clf, y_clf, test_size=0.2, random_state=42)
+
+# --- 4. K-NEAREST NEIGHBORS (KNN) ---
+print("\n--- 4. K-NEAREST NEIGHBORS (KNN) ---")
+from sklearn.neighbors import KNeighborsClassifier
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+print("KNN Accuracy:", accuracy_score(y_test, knn.predict(X_test)))
+
+# --- 5. NAIVE BAYES ---
+print("\n--- 5. NAIVE BAYES ---")
+from sklearn.naive_bayes import GaussianNB
+nb = GaussianNB()
+nb.fit(X_train, y_train)
+print("Naive Bayes Accuracy:", accuracy_score(y_test, nb.predict(X_test)))
+
+# --- 6. ADABOOST ---
+print("\n--- 6. ADABOOST ---")
+from sklearn.ensemble import AdaBoostClassifier
+adaboost = AdaBoostClassifier(n_estimators=50, random_state=42)
+adaboost.fit(X_train, y_train)
+print("AdaBoost Accuracy:", accuracy_score(y_test, adaboost.predict(X_test)))
+
+
+# ==============================================================================
+# 7. K-MEANS CLUSTERING (k=3)
+# ==============================================================================
+print("\n--- 7. K-MEANS CLUSTERING (k=3) ---")
+from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+
+# Generate synthetic data specifically for clustering
+X_cluster, _ = make_blobs(n_samples=150, centers=3, cluster_std=0.60, random_state=0)
+
+### --- CSV INTEGRATION --- ###
+# df_cluster = pd.read_csv("unlabeled_data.csv")
+# X_cluster = df_cluster.iloc[:, :-1].values 
+### ----------------------- ###
+
+# Note: n_clusters=3 as explicitly requested in the PDF
+kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
+clusters = kmeans.fit_predict(X_cluster) 
+
+print("K-Means Cluster Centers:\n", kmeans.cluster_centers_)
+
+# Visualization
+plt.scatter(X_cluster[:, 0], X_cluster[:, 1], c=clusters, cmap='viridis', marker='o')
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=200, c='red', label='Centroids')
+plt.title('K-Means Clustering (k=3)')
+plt.legend()
+plt.show()
 
 # ==============================================================================
 # LAB 1: DATA PREPROCESSING & SIMPLE LINEAR REGRESSION
